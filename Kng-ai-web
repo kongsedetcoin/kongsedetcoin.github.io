@@ -1,0 +1,55 @@
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+export default function Home() {
+  const [message, setMessage] = useState("");
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSend = async () => {
+    if (!message) return;
+    setLoading(true);
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [
+            { role: "system", content: "You are KNG AI, a helpful assistant for trading and gold market analysis." },
+            { role: "user", content: message },
+          ],
+        }),
+      });
+      const data = await res.json();
+      setResponse(data.choices?.[0]?.message?.content || "No response");
+    } catch (err) {
+      setResponse("Error: " + err.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-black text-white">
+      <h1 className="text-3xl font-bold mb-6">🤖 KNG AI Web</h1>
+      <div className="w-full max-w-xl space-y-4">
+        <Input
+          placeholder="Tanyakan apapun tentang market XAUUSD..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          className="text-black"
+        />
+        <Button onClick={handleSend} disabled={loading}>
+          {loading ? "Mengirim..." : "Kirim Pertanyaan"}
+        </Button>
+        <div className="mt-4 bg-zinc-800 p-4 rounded-xl min-h-[120px]">
+          {loading ? "Menunggu jawaban..." : response}
+        </div>
+      </div>
+    </div>
+  );
+}
